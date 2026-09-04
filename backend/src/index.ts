@@ -1,6 +1,8 @@
 import express, { type Express, type Request, type Response } from 'express';
+import cors from 'cors';
 
 const app: Express = express();
+app.use(cors());
 const port = 3000;
 
 const contatos = [
