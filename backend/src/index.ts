@@ -1,22 +1,90 @@
-import express, { type Express, type Request, type Response } from 'express';
-import cors from 'cors';
+import express, { type Express, type Request, type Response } from "express";
+import cors from "cors";
 
 const app: Express = express();
 app.use(cors());
+//Aceitar JSON no corpo da requisição
+app.use(express.json());
+
 const port = 3000;
 
+
 const contatos = [
-    { id: 1, nome: "Mauro", email: "canivete@teste.com"},
-    { id: 2, nome: "Samuel", email: "Samuelemauro@gmail.com"},
-    { id: 3, nome: "Gu", email: "passeio@teste.com"},
+  { id: 1, name: "Mauro", email: "canivete@teste.com" },
+  { id: 2, name: "Samuel", email: "samuelemauro@teste.com" },
+  { id: 3, name: "Gu", email: "passeio@teste.com" },
 ];
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello World!');
+app.get("/", (req: Request, res: Response) => {
+  res.send("Hello World!");
 });
 
-app.get('/api/contatos', (req: Request, res: Response) => {
-    res.json(contatos);
+//GET: Requisição para buscar contatos
+app.get("/api/contatos", (req: Request, res: Response) => {
+  res.json(contatos);
+});
+
+//POST: Requisição para adicionar um novo contato
+app.post("/api/contatos", (req: Request, res: Response) => {
+  const { name, email } = req.body;
+
+  if (!name || !email) {
+    return res.status(400).json({ erro: "Nome e email são obrigatórios" });
+  }
+
+  const novoId = contatos.length > 0 ? Math.max(...contatos.map((c) => c.id)) + 1 : 1;
+
+  const novoContato = {
+    id: novoId,
+    name,
+    email,
+  };
+  contatos.push(novoContato);
+
+  res.status(201).json(novoContato);
+});
+
+// PUT: Requisição para atualizar um contato existente
+app.put("/api/contatos/:id", (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const { name, email } = req.body;
+
+  const index = contatos.findIndex((c) => c.id === id);
+
+  const contatoExistente = contatos[index];
+
+  if (!contatoExistente) {
+    return res.status(404).json({
+      erro: "Contato não encontrado",
+    });
+  }
+
+  const contatoAtualizado = {
+    ...contatoExistente,
+    name: name ?? contatoExistente.name,
+    email: email ?? contatoExistente.email,
+  };
+
+  contatos[index] = contatoAtualizado;
+
+  return res.json(contatoAtualizado);
+});
+
+//DELETE: Requisição para deletar um contato existente
+app.delete("/api/contatos/:id", (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const index = contatos.findIndex((c) => c.id === id);
+
+  if (index === -1) {
+    return res.status(404).json({
+      erro: "Contato não encontrado",
+    });
+  }
+
+  contatos.splice(index,1);
+
+  //Retorna (No Content) para indicar que a exclusão foi bem-sucedida, mas não há conteudo para retornar
+  return res.status(204).send();
 });
 
 app.listen(port, () => {
