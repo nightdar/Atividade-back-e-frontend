@@ -1,13 +1,33 @@
 import express, { type Express, type Request, type Response } from "express";
 import cors from "cors";
+import { Pool } from "pg"
+import dotenv from "dotenv";
+dotenv.config();
+
 
 const app: Express = express();
 app.use(cors());
 //Aceitar JSON no corpo da requisição
 app.use(express.json());
 
-const port = 3000;
+const port = process.env.PORT || 3000;
 
+export const pool = new Pool({
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+})
+
+async function testarBanco() {
+  try {
+    const result = await pool.query('SELECT * FROM contatos');
+    console.log("Banco de dados conectado");
+  } catch (error) {
+    console.error('Erro ao conectar com o bd', error)
+  }
+}
 
 const contatos = [
   { id: 1, name: "Mauro", email: "canivete@teste.com" },
@@ -20,8 +40,14 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 //GET: Requisição para buscar contatos
-app.get("/api/contatos", (req: Request, res: Response) => {
-  res.json(contatos);
+app.get("/api/contatos", async (req: Request, res: Response) => {
+  try {
+    const result = await prisma.contato.findMany();
+    res.json(result);
+  } catch (error) {
+    console.error('Erro ao conectar com o bd', error)
+    res.status(500).json({error: "Erro interno no servidor"});
+  }
 });
 
 //POST: Requisição para adicionar um novo contato
@@ -89,4 +115,5 @@ app.delete("/api/contatos/:id", (req: Request, res: Response) => {
 
 app.listen(port, () => {
   console.log(`Servidor iniciado em: http://localhost:${port}`);
+  testarBanco();
 });
