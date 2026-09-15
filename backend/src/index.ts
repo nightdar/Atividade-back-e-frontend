@@ -7,7 +7,10 @@ import { prisma } from "./lib/prisma.js";
 
 const app: Express = express();
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+}));
+
 app.use(express.json());
 
 const port = process.env.PORT || 3000;
@@ -103,6 +106,10 @@ app.delete("/api/contatos/:id", async (req: Request, res: Response) => {
     console.error("Erro ao deletar contato: ", error);
     res.status(500).json({ error: "Erro interno no servidor" });
   }
+});
+
+app.get("/test", (req: Request, res: Response) => {
+  res.json({ message: "Servidor está funcionando!" });
 });
 
 app.listen(port, () => {
